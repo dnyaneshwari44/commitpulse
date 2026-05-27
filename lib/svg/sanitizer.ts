@@ -13,7 +13,7 @@ const HEX_COLOR_REGEX = /^([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa
  */
 export function isValidHex(color?: string): boolean {
   if (!color) return false;
-  const cleanColor = color.replace('#', '');
+  const cleanColor = color.replace(/^#+/, '');
   return HEX_COLOR_REGEX.test(cleanColor);
 }
 
@@ -26,11 +26,11 @@ export function isValidHex(color?: string): boolean {
  * For user-supplied input, use `sanitizeHexColor` instead.
  */
 export function hexColor(value: string, fallback = '000000'): HexColor {
-  const cleaned = value.replace('#', '');
+  const cleaned = value.replace(/^#+/, '');
   if (HEX_COLOR_REGEX.test(cleaned)) {
     return cleaned as HexColor;
   }
-  return fallback.replace('#', '') as HexColor;
+  return fallback.replace(/^#+/, '') as HexColor;
 }
 
 /**
@@ -38,15 +38,15 @@ export function hexColor(value: string, fallback = '000000'): HexColor {
  * Always returns a hex string WITHOUT the leading #.
  */
 export function sanitizeHexColor(input: string | undefined | null, fallback: string): HexColor {
-  if (!input) return fallback.replace('#', '') as HexColor;
+  if (!input) return fallback.replace(/^#+/, '') as HexColor;
 
-  const cleanInput = input.trim().replace('#', '');
+  const cleanInput = input.trim().replace(/^#+/, '');
 
   if (HEX_COLOR_REGEX.test(cleanInput)) {
     return cleanInput as HexColor;
   }
 
-  return fallback.replace('#', '') as HexColor;
+  return fallback.replace(/^#+/, '') as HexColor;
 }
 
 /**
