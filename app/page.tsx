@@ -355,6 +355,16 @@ export default function LandingPage() {
                       </div>
                     </div>
                   )}
+                  {svgState === 'error' && (
+                    <div className="flex flex-col items-center justify-center gap-2 text-center py-8">
+                      <p className="text-sm font-semibold text-red-500 dark:text-red-400">
+                        Failed to load badge
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-white/40">
+                        The API may be unavailable. Please try again.
+                      </p>
+                    </div>
+                  )}
                   {svgState === 'loaded' && svgContent && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95 }}
