@@ -803,6 +803,48 @@ describe('GET /api/streak', () => {
       expect(body).toContain('CURRENT_STREAK');
     });
     // =========================================================================
+    // ISSUE OBJECTIVE: Custom dimensions in monthly view (?width & ?height)
+    // =========================================================================
+    it('applies custom width and height parameters to the monthly SVG', async () => {
+      // 1. Create a fresh mock function and inject it globally just for this test
+      const tempMockFetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            user: {
+              createdAt: '2020-01-01T00:00:00Z',
+              contributionsCollection: {
+                contributionCalendar: {
+                  totalContributions: 100,
+                  weeks: [],
+                },
+              },
+            },
+          },
+        }),
+      });
+      vi.stubGlobal('fetch', tempMockFetch);
+
+      // 2. Make request using the file's built-in makeRequest helper (No 'any' needed!)
+      const req = makeRequest({ user: 'octocat', view: 'monthly', width: '400', height: '150' });
+      const res = await GET(req);
+
+      // Assert status is 200 OK
+      expect(res.status).toBe(200);
+
+      const body = await res.text();
+
+      // 3. Assert body contains width="400"
+      expect(body).toContain('width="400"');
+
+      // 4. Assert body contains height="150"
+      expect(body).toContain('height="150"');
+
+      // Cleanup the stub so it doesn't leak into other tests
+      vi.unstubAllGlobals();
+    });
+
+    // =========================================================================
     // ISSUE OBJECTIVE: Route test for ?view=monthly&delta_format=both
     // =========================================================================
     it('applies delta_format=both to show percent and absolute values in the monthly SVG', async () => {
@@ -846,7 +888,6 @@ describe('GET /api/streak', () => {
           { contributionDays: [{ date: '2026-05-15', contributionCount: 15 }] },
         ],
       } as unknown as ContributionCalendar);
-
       // 2. Lock the system time to May 2026 so the calendar calculation aligns
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2026-05-20T12:00:00Z'));
@@ -894,7 +935,6 @@ describe('GET /api/streak', () => {
       expect(body).toContain('stroke-opacity="0.3"');
     });
   });
-
   describe('lang parameter', () => {
     it('returns Spanish translations when ?lang=es is given', async () => {
       const response = await GET(makeRequest({ user: 'octocat', lang: 'es' }));
