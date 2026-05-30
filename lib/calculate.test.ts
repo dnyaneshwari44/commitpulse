@@ -295,6 +295,35 @@ describe('calculateStreak — timezone awareness', () => {
     expect(result.currentStreak).toBe(0);
   });
 
+  it('handles commits around midnight correctly across timezone offsets', () => {
+    const calendar = {
+      totalContributions: 2,
+      weeks: [
+        {
+          contributionDays: [
+            { contributionCount: 0, date: '2024-06-12' },
+            { contributionCount: 1, date: '2024-06-13' },
+            { contributionCount: 1, date: '2024-06-14' },
+            { contributionCount: 0, date: '2024-06-15' },
+          ],
+        },
+      ],
+    };
+
+    const nowUTC = new Date('2024-06-14T23:59:00.000Z');
+
+    const utcResult = calculateStreak(calendar, 'UTC', nowUTC);
+    const aheadOffsetResult = calculateStreak(calendar, 'Etc/GMT-1', nowUTC);
+
+    expect(utcResult.todayDate).toBe('2024-06-14');
+    expect(utcResult.currentStreak).toBe(2);
+    expect(utcResult.longestStreak).toBe(2);
+
+    expect(aheadOffsetResult.todayDate).toBe('2024-06-15');
+    expect(aheadOffsetResult.currentStreak).toBe(2);
+    expect(aheadOffsetResult.longestStreak).toBe(2);
+  });
+
   it('preserves the streak when the local date (UTC-8) maps to a day with commits via grace period', () => {
     const result = calculateStreak(tzCalendar, 'Etc/GMT+8', nowUTC);
     expect(result.currentStreak).toBe(3);
