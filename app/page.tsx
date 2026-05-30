@@ -12,6 +12,7 @@ import { useRecentSearches } from '@/hooks/useRecentSearches';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Footer } from '@/app/components/Footer';
 import InteractiveViewer from '@/components/InteractiveViewer';
+import DOMPurify from 'dompurify';
 
 const Icons = {
   Github: () => (
@@ -266,11 +267,10 @@ export default function LandingPage() {
                   type="submit"
                   suppressHydrationWarning
                   disabled={!mounted || trimmedUsername.length === 0}
-                  className={`relative flex min-w-[160px] items-center justify-center gap-2 overflow-hidden rounded-2xl px-6 py-4 text-sm font-semibold transition-all duration-300 transform cursor-pointer hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed ${
-                    mounted && trimmedUsername.length > 0
-                      ? 'bg-black text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-gray-100 shadow-md'
-                      : 'bg-gray-100 text-gray-400 dark:bg-white/5 dark:text-white/20'
-                  }`}
+                  className={`relative flex min-w-[160px] items-center justify-center gap-2 overflow-hidden rounded-2xl px-6 py-4 text-sm font-semibold transition-all duration-300 transform cursor-pointer hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed ${mounted && trimmedUsername.length > 0
+                    ? 'bg-black text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-gray-100 shadow-md'
+                    : 'bg-gray-100 text-gray-400 dark:bg-white/5 dark:text-white/20'
+                    }`}
                 >
                   <AnimatePresence mode="wait">
                     {copied ? (
@@ -308,11 +308,10 @@ export default function LandingPage() {
                       addSearch(trimmedUsername);
                     }
                   }}
-                  className={`relative flex min-w-[160px] items-center justify-center gap-2 overflow-hidden rounded-2xl border px-6 py-4 text-sm font-semibold transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] ${
-                    mounted && trimmedUsername.length > 0
-                      ? 'border-black/10 bg-white text-black hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 shadow-sm'
-                      : 'border-black/5 bg-gray-50 text-gray-400 dark:border-white/5 dark:bg-transparent dark:text-white/20'
-                  }`}
+                  className={`relative flex min-w-[160px] items-center justify-center gap-2 overflow-hidden rounded-2xl border px-6 py-4 text-sm font-semibold transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] ${mounted && trimmedUsername.length > 0
+                    ? 'border-black/10 bg-white text-black hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 shadow-sm'
+                    : 'border-black/5 bg-gray-50 text-gray-400 dark:border-white/5 dark:bg-transparent dark:text-white/20'
+                    }`}
                 >
                   Watch Dashboard
                 </Link>
@@ -393,7 +392,11 @@ export default function LandingPage() {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.5, ease: 'easeOut' }}
                       className="cp-svg-container w-full max-w-[700px] drop-shadow-[0_30px_60px_rgba(0,0,0,0.15)] dark:drop-shadow-[0_30px_60px_rgba(0,0,0,0.5)] [&>svg]:w-full [&>svg]:h-auto"
-                      dangerouslySetInnerHTML={{ __html: svgContent }}
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(svgContent, {
+                          USE_PROFILES: { svg: true, html: true },
+                        }),
+                      }}
                     />
                   )}
                   {svgState === 'loaded' && !svgContent && errorMessage && (
