@@ -780,6 +780,16 @@ describe('GET /api/streak', () => {
 
       expect(response.status).toBe(400);
     });
+
+    it('returns 400 Bad Request for invalid color hex syntax targeting the ?accent= parameter', async () => {
+      const response = await GET(makeRequest({ user: 'octocat', accent: '#ZZZZZZ' }));
+
+      expect(response.status).toBe(400);
+
+      const body = await response.json();
+      expect(body.error).toBe('Invalid parameters');
+      expect(body.details).not.toBeNull();
+    });
   });
 
   describe('hide parameters', () => {
