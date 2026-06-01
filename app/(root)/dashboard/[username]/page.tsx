@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import { getFullDashboardData, fetchUserProfile } from '@/lib/github';
 import { notFound, redirect } from 'next/navigation';
+import { resolveDashboardPeriod } from '@/utils/dashboardPeriod';
 
 export const revalidate = 3600; // Cache for 1 hour
 
@@ -63,17 +64,32 @@ export default async function DashboardPage({
   searchParams: Promise<{
     refresh?: string;
     compare?: string;
+    year?: string;
+    month?: string;
+    from?: string;
+    to?: string;
   }>;
 }) {
   const { username } = await params;
   const resolvedSearchParams = await searchParams;
   const bypassCache = resolvedSearchParams?.refresh === 'true';
   const compareUsername = resolvedSearchParams?.compare;
+  const period = resolveDashboardPeriod({
+    year: resolvedSearchParams?.year,
+    month: resolvedSearchParams?.month,
+    from: resolvedSearchParams?.from,
+    to: resolvedSearchParams?.to,
+  });
 
   let data;
 
   try {
-    data = await getFullDashboardData(username, { bypassCache });
+    data = await getFullDashboardData(username, {
+      bypassCache,
+      from: period.from,
+      to: period.to,
+      rangeLabel: period.label,
+    });
   } catch (error) {
     if (error instanceof Error && error.message.includes('not found')) {
       let fallbackProfile;
@@ -114,4 +130,6 @@ export default async function DashboardPage({
       compareData={compareData}
     />
   );
+}
+  return <DashboardClient initialData={data} username={username} period={period} />;
 }
