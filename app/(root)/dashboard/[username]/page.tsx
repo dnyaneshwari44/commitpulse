@@ -110,10 +110,7 @@ export default async function DashboardPage({
 
   let compareData = null;
 
-  if (
-    compareUsername &&
-    compareUsername.toLowerCase() !== username.toLowerCase()
-  ) {
+  if (compareUsername && compareUsername.toLowerCase() !== username.toLowerCase()) {
     try {
       compareData = await getFullDashboardData(compareUsername, {
         bypassCache,
@@ -128,8 +125,7 @@ export default async function DashboardPage({
       initialData={data}
       username={username}
       compareData={compareData}
+      period={period}
     />
   );
-}
-  return <DashboardClient initialData={data} username={username} period={period} />;
 }

@@ -323,7 +323,12 @@ function getPersonalityTags(
 // DashboardClient Component
 // ------------------------------------------------------------
 
-export default function DashboardClient({ initialData, username, compareData = null, }: DashboardClientProps) {
+export default function DashboardClient({
+  initialData,
+  username,
+  compareData = null,
+  period,
+}: DashboardClientProps) {
   const [secondUserData, setSecondUserData] = useState<DashboardData | null>(compareData);
   const [isCompareMode, setIsCompareMode] = useState(Boolean(compareData));
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -428,9 +433,7 @@ export default function DashboardClient({ initialData, username, compareData = n
       setSecondUserData(data);
       setIsCompareMode(true);
 
-      router.replace(
-        `/dashboard/${username}?compare=${data.profile.username}`
-      );
+      router.replace(`/dashboard/${username}?compare=${data.profile.username}`);
 
       setIsModalOpen(false);
       toast.success(`Comparing ${username} vs ${data.profile.username}`);
@@ -453,25 +456,25 @@ export default function DashboardClient({ initialData, username, compareData = n
   };
 
   const handleShareComparison = async () => {
-  if (!secondUserData) return;
+    if (!secondUserData) return;
 
-  const compareUrl = `${window.location.origin}/dashboard/${username}?compare=${secondUserData.profile.username}`;
+    const compareUrl = `${window.location.origin}/dashboard/${username}?compare=${secondUserData.profile.username}`;
 
-  try {
-    if (navigator.share) {
-      await navigator.share({
-        title: `${username} vs ${secondUserData.profile.username}`,
-        text: 'Check out this GitHub profile comparison',
-        url: compareUrl,
-      });
-    } else {
-      await navigator.clipboard.writeText(compareUrl);
-      toast.success('Comparison link copied!');
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `${username} vs ${secondUserData.profile.username}`,
+          text: 'Check out this GitHub profile comparison',
+          url: compareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(compareUrl);
+        toast.success('Comparison link copied!');
+      }
+    } catch {
+      // user cancelled share dialog
     }
-  } catch {
-    // user cancelled share dialog
-  }
-};
+  };
 
   // ------------------------------------------------------------
   // Compare Mode Statistics Calculations
@@ -599,11 +602,10 @@ export default function DashboardClient({ initialData, username, compareData = n
               onClick={handleShareComparison}
               className="flex items-center gap-2 rounded-xl border border-black/10 dark:border-[rgba(255,255,255,0.15)] bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 active:scale-[0.98]"
             >
-            <Share2 size={16} />
-                   Share Comparison
+              <Share2 size={16} />
+              Share Comparison
             </button>
           )}
-
 
           <RefreshButton username={username} />
           <button
