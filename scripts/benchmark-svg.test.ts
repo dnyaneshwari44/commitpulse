@@ -84,7 +84,12 @@ describe('scripts/benchmark-svg', () => {
 
     const lines = logSpy.mock.calls
       .map((args) => String(args[0]))
-      .filter((line) => line.startsWith('Average:') || line.startsWith('Min:') || line.startsWith('Max:'));
+      .filter(
+        (line) =>
+          line.startsWith('Average:') ||
+          line.startsWith('Min:') ||
+          line.startsWith('Max:')
+      );
 
     expect(lines.length).toBe(9);
     for (const line of lines) {
