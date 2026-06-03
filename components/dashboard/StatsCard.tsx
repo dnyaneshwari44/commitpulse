@@ -9,7 +9,7 @@ const iconMap: Record<string, LucideIcon> = {
   GitCommit,
 };
 
-interface StatsCardProps {
+export interface StatsCardProps {
   title: string;
   value: string;
   description: string;
