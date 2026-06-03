@@ -1,7 +1,7 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import CherryBlossom, { type Petal } from './CherryBlossom';
 
-type CherryBlossomProps = Parameters<typeof CherryBlossom>[0];
+// CherryBlossom takes no props
 
 const requiredPetalKeys = [
   'id',
@@ -33,9 +33,7 @@ function validatePetal(value: Petal) {
 
 describe('CherryBlossom type compiler validation', () => {
   it('exports a component that does not require props', () => {
-    // React components without props take an empty object or undefined
-    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-    expectTypeOf<CherryBlossomProps>().toEqualTypeOf<{} | undefined>();
+    expectTypeOf<Parameters<typeof CherryBlossom>>().toEqualTypeOf<[]>();
   });
 
   it('enforces the Petal field contract', () => {
