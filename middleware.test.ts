@@ -1,12 +1,10 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 import { middleware, config } from './middleware';
-import { middlewareRateLimiter } from '@/lib/rate-limit';
+import { rateLimit } from '@/lib/rate-limit';
 
 vi.mock('@/lib/rate-limit', () => ({
-  middlewareRateLimiter: {
-    checkWithResult: vi.fn(),
-  },
+  rateLimit: vi.fn(),
 }));
 
 describe('middleware', () => {
@@ -24,7 +22,7 @@ describe('middleware', () => {
   });
 
   it('calls NextResponse.next when rate limit succeeds', async () => {
-    vi.mocked(middlewareRateLimiter.checkWithResult).mockResolvedValue({
+    vi.mocked(rateLimit).mockResolvedValue({
       success: true,
       limit: 60,
       remaining: 59,
@@ -40,7 +38,7 @@ describe('middleware', () => {
   });
 
   it('returns 429 when rate limit fails', async () => {
-    vi.mocked(middlewareRateLimiter.checkWithResult).mockResolvedValue({
+    vi.mocked(rateLimit).mockResolvedValue({
       success: false,
       limit: 60,
       remaining: 0,
@@ -54,7 +52,7 @@ describe('middleware', () => {
   });
 
   it('returns too many requests error body when rate limit fails', async () => {
-    vi.mocked(middlewareRateLimiter.checkWithResult).mockResolvedValue({
+    vi.mocked(rateLimit).mockResolvedValue({
       success: false,
       limit: 60,
       remaining: 0,
@@ -69,8 +67,8 @@ describe('middleware', () => {
     });
   });
 
-  it('calls middlewareRateLimiter with client IP', async () => {
-    vi.mocked(middlewareRateLimiter.checkWithResult).mockResolvedValue({
+  it('calls rateLimit with fixed policy values (60 requests / 60000ms)', async () => {
+    vi.mocked(rateLimit).mockResolvedValue({
       success: true,
       limit: 60,
       remaining: 59,
@@ -80,11 +78,11 @@ describe('middleware', () => {
     const request = new NextRequest('http://localhost:3000/api/streak?user=octocat');
     await middleware(request);
 
-    expect(middlewareRateLimiter.checkWithResult).toHaveBeenCalledWith(expect.any(String));
+    expect(rateLimit).toHaveBeenCalledWith(expect.any(String), 60, 60000);
   });
 
   it('sets all X-RateLimit headers on successful requests', async () => {
-    vi.mocked(middlewareRateLimiter.checkWithResult).mockResolvedValue({
+    vi.mocked(rateLimit).mockResolvedValue({
       success: true,
       limit: 60,
       remaining: 59,
@@ -100,7 +98,7 @@ describe('middleware', () => {
   });
 
   it('sets JSON and rate headers on throttled responses', async () => {
-    vi.mocked(middlewareRateLimiter.checkWithResult).mockResolvedValue({
+    vi.mocked(rateLimit).mockResolvedValue({
       success: false,
       limit: 60,
       remaining: 0,
@@ -117,7 +115,7 @@ describe('middleware', () => {
   });
 
   it('uses first IP from x-forwarded-for when subsequent hops are trusted', async () => {
-    vi.mocked(middlewareRateLimiter.checkWithResult).mockResolvedValue({
+    vi.mocked(rateLimit).mockResolvedValue({
       success: true,
       limit: 60,
       remaining: 59,
@@ -132,11 +130,11 @@ describe('middleware', () => {
 
     await middleware(request);
 
-    expect(middlewareRateLimiter.checkWithResult).toHaveBeenCalledWith('1.2.3.4');
+    expect(rateLimit).toHaveBeenCalledWith('1.2.3.4', 60, 60000);
   });
 
   it('ignores spoofed x-forwarded-for when subsequent hops are untrusted', async () => {
-    vi.mocked(middlewareRateLimiter.checkWithResult).mockResolvedValue({
+    vi.mocked(rateLimit).mockResolvedValue({
       success: true,
       limit: 60,
       remaining: 59,
@@ -155,11 +153,11 @@ describe('middleware', () => {
     await middleware(request);
 
     // Should resolve to the untrusted proxy IP (5.6.7.8) instead of the spoofed client IP (1.2.3.4)
-    expect(middlewareRateLimiter.checkWithResult).toHaveBeenCalledWith('5.6.7.8');
+    expect(rateLimit).toHaveBeenCalledWith('5.6.7.8', 60, 60000);
   });
 
   it('uses x-real-ip if x-forwarded-for is missing', async () => {
-    vi.mocked(middlewareRateLimiter.checkWithResult).mockResolvedValue({
+    vi.mocked(rateLimit).mockResolvedValue({
       success: true,
       limit: 60,
       remaining: 59,
@@ -174,11 +172,11 @@ describe('middleware', () => {
 
     await middleware(request);
 
-    expect(middlewareRateLimiter.checkWithResult).toHaveBeenCalledWith('9.9.9.9');
+    expect(rateLimit).toHaveBeenCalledWith('9.9.9.9', 60, 60000);
   });
 
   it('defaults to 127.0.0.1 when no IP headers', async () => {
-    vi.mocked(middlewareRateLimiter.checkWithResult).mockResolvedValue({
+    vi.mocked(rateLimit).mockResolvedValue({
       success: true,
       limit: 60,
       remaining: 59,
@@ -189,11 +187,11 @@ describe('middleware', () => {
 
     await middleware(request);
 
-    expect(middlewareRateLimiter.checkWithResult).toHaveBeenCalledWith('127.0.0.1');
+    expect(rateLimit).toHaveBeenCalledWith('127.0.0.1', 60, 60000);
   });
 
   it('prefers x-forwarded-for over x-real-ip', async () => {
-    vi.mocked(middlewareRateLimiter.checkWithResult).mockResolvedValue({
+    vi.mocked(rateLimit).mockResolvedValue({
       success: true,
       limit: 60,
       remaining: 59,
@@ -209,11 +207,11 @@ describe('middleware', () => {
 
     await middleware(request);
 
-    expect(middlewareRateLimiter.checkWithResult).toHaveBeenCalledWith('1.2.3.4');
+    expect(rateLimit).toHaveBeenCalledWith('1.2.3.4', 60, 60000);
   });
 
   it('handles multiple IPs with whitespace', async () => {
-    vi.mocked(middlewareRateLimiter.checkWithResult).mockResolvedValue({
+    vi.mocked(rateLimit).mockResolvedValue({
       success: true,
       limit: 60,
       remaining: 59,
@@ -228,7 +226,7 @@ describe('middleware', () => {
 
     await middleware(request);
 
-    expect(middlewareRateLimiter.checkWithResult).toHaveBeenCalledWith('1.2.3.4');
+    expect(rateLimit).toHaveBeenCalledWith('1.2.3.4', 60, 60000);
   });
 
   it('includes compare API matcher in middleware config', () => {

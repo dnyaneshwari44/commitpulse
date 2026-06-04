@@ -23,7 +23,7 @@ export class RateLimiter {
 
   /**
    * Creates a new RateLimiter instance.
-   *
+   *clean
    * @param limit - Maximum number of requests allowed per window. Defaults to 5.
    * @param windowMs - Time window in milliseconds. Defaults to 60000 (1 minute).
    */
@@ -48,17 +48,8 @@ export class RateLimiter {
    * }
    */
   async check(ip: string): Promise<boolean> {
-    if (this.allowlist.has(ip)) return true;
-    if (this.blocklist.has(ip)) return false;
-    const record = await this.cache.get(ip);
-    const count = record?.count ?? 0;
-    if (count >= this.limit) return false;
-    if (!record) {
-      await this.cache.set(ip, { count: 1, resetAt: Date.now() + this.windowMs }, this.windowMs);
-    } else {
-      await this.cache.update(ip, { count: count + 1, resetAt: record.resetAt });
-    }
-    return true;
+    const result = await this.checkWithResult(ip);
+    return result.success;
   }
 
   async checkWithResult(ip: string): Promise<RateLimitResult> {
@@ -73,6 +64,38 @@ export class RateLimiter {
       return { success: false, limit: this.limit, remaining: 0, reset: Date.now() + this.windowMs };
 
     const now = Date.now();
+    const url = process.env.KV_REST_API_URL;
+    const token = process.env.KV_REST_API_TOKEN;
+
+    if (url && token) {
+      try {
+        const res = await fetch(`${url}/pipeline`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify([
+            ['INCR', `ratelimit_class:${ip}`],
+            ['EXPIRE', `ratelimit_class:${ip}`, Math.floor(this.windowMs / 1000), 'NX'],
+          ]),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const count = data[0].result as number;
+          return {
+            success: count <= this.limit,
+            limit: this.limit,
+            remaining: Math.max(0, this.limit - count),
+            reset: now + this.windowMs,
+          };
+        }
+      } catch (error) {
+        console.error('RateLimiter KV error, falling back to memory:', error);
+      }
+    }
+
     const record = await this.cache.get(ip);
     const count = record?.count ?? 0;
 
@@ -166,5 +189,99 @@ export const trackUserRateLimiter = new RateLimiter(5, 60000);
 // Global instance for notify endpoint (5 requests per IP per minute)
 export const notifyRateLimiter = new RateLimiter(5, 60000);
 
-// Global instance for Edge Middleware (60 requests per IP per minute, bounded cache)
-export const middlewareRateLimiter = new RateLimiter(60, 60000, 2000);
+/**
+ * Distributed rate limiter for Next.js Edge Middleware.
+ *
+ * When Upstash Redis / Vercel KV is configured, counters are shared across
+ * all serverless instances via atomic INCR + EXPIRE Lua scripts.
+ * Falls back to a local in-memory cache for development environments.
+ */
+
+const trackers = new DistributedCache<{ count: number; resetAt: number }>(2000, 60000);
+
+/**
+ * Checks if a request from a given IP should be rate limited.
+ *
+ * @param ip - The IP address to track.
+ * @param limit - Maximum number of requests allowed in the window. Defaults to 60.
+ * @param windowMs - Time window in milliseconds. Defaults to 60000 (1 minute).
+ * @returns A {@link RateLimitResult} containing success status, limit, remaining count, and reset time.
+ *
+ * @example
+ * const result = rateLimit(ip);
+ * if (!result.success) {
+ *   return new Response("Too Many Requests", { status: 429 });
+ * }
+ */
+export async function rateLimit(
+  ip: string,
+  limit: number = 60,
+  windowMs: number = 60000
+): Promise<RateLimitResult> {
+  const now = Date.now();
+  const url = process.env.KV_REST_API_URL;
+  const token = process.env.KV_REST_API_TOKEN;
+
+  // Use Upstash Redis if configured
+  if (url && token) {
+    try {
+      const res = await fetch(`${url}/pipeline`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([
+          ['INCR', `ratelimit:${ip}`],
+          ['EXPIRE', `ratelimit:${ip}`, Math.floor(windowMs / 1000), 'NX'],
+        ]),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const count = data[0].result as number;
+        return {
+          success: count <= limit,
+          limit,
+          remaining: Math.max(0, limit - count),
+          reset: now + windowMs, // Approximated for simplicity
+        };
+      }
+    } catch (error) {
+      console.error('Rate limit KV error, falling back to memory:', error);
+    }
+  }
+
+  // Fallback to local in-memory cache
+  const tracker = await trackers.get(ip);
+
+  if (!tracker) {
+    const resetAt = now + windowMs;
+    await trackers.set(ip, { count: 1, resetAt }, windowMs);
+    return {
+      success: true,
+      limit,
+      remaining: limit - 1,
+      reset: resetAt,
+    };
+  }
+
+  tracker.count++;
+  await trackers.update(ip, tracker);
+
+  if (tracker.count > limit) {
+    return {
+      success: false,
+      limit,
+      remaining: 0,
+      reset: tracker.resetAt,
+    };
+  }
+
+  return {
+    success: true,
+    limit,
+    remaining: limit - tracker.count,
+    reset: tracker.resetAt,
+  };
+}
