@@ -30,6 +30,7 @@ interface HeatmapProps {
   title?: string;
   subtitle?: string;
   emptyMessage?: string;
+  timeZone?: string;
 }
 
 export default function Heatmap({
@@ -37,22 +38,30 @@ export default function Heatmap({
   title = 'Contribution Heatmap',
   subtitle = 'Last 365 days',
   emptyMessage = 'No recent activity to display',
+  timeZone = 'UTC',
 }: HeatmapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
-  // 1. Filter out future dates using the user's system clock
-  const validData = data.filter((day) => {
-    const dayDate = new Date(day.date);
-    const today = new Date();
+  const effectiveTimeZone = timeZone || 'UTC';
 
-    // Normalize times to strictly compare dates
-    dayDate.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
+  const getTimeZoneDateLabel = (input: string | Date) => {
+    const date = typeof input === 'string' ? new Date(`${input}T00:00:00Z`) : input;
 
-    return dayDate <= today;
-  });
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: effectiveTimeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
+  };
+
+  // 1. Filter out future dates by comparing the activity day against the current
+  // timezone-specific calendar date.
+  const todayInZone = getTimeZoneDateLabel(new Date());
+
+  const validData = data.filter((day) => day.date <= todayInZone);
 
   // 2. Group into 7-day columns using validData instead of data
   const weeks: ActivityData[][] = [];
@@ -178,7 +187,6 @@ export default function Heatmap({
           </div>
         )}
       </motion.div>
-
       {/* Tooltip rendered at viewport level — unaffected by scale/overflow */}
       <AnimatePresence>
         {tooltip && (
@@ -192,6 +200,7 @@ export default function Heatmap({
           </VisualizationTooltip>
         )}
       </AnimatePresence>
+      .
     </>
   );
 }
