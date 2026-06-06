@@ -14,6 +14,11 @@ export function toBooleanFlag(val?: string): boolean {
   return val === 'true' || val === '1';
 }
 
+export function toGlowFlag(val?: string): boolean {
+  if (val === undefined) return true;
+  return val === 'true' || val === '1';
+}
+
 export function toRefreshFlag(val?: string): boolean {
   return val === 'true';
 }
@@ -342,7 +347,7 @@ const baseStreakParamsSchema = z.object({
     .transform((val) => val === 'true' || val === '1'),
 
   // Glow effect — on by default. Accepts 'true'/'1' (true) or 'false' (false).
-  glow: z.string().optional().transform(toBooleanFlag).default(true),
+  glow: z.string().optional().transform(toGlowFlag).default(true),
   opacity: z.string().optional().transform(toOpacityValue),
   entrance: z.enum(['rise', 'fade', 'slide', 'none']).catch('rise').default('rise'),
   badges: z.string().optional().transform(toBooleanFlag).default(false),
