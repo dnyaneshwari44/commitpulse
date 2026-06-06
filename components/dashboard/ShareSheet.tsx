@@ -153,7 +153,6 @@ export default function ShareSheet({ username, isOpen, onClose, exportData }: Sh
   const [linkCopied, setLinkCopied] = useState(false);
   const [qrCopied, setQrCopied] = useState(false);
   const [mdCopied, setMdCopied] = useState(false);
-  const [localStates, setLocalStates] = useState<Record<string, OptionState>>({});
   const [toast, setToast] = useState<{ msg: string; id: number } | null>(null);
 
   const profileUrl = `https://commitpulse.vercel.app/dashboard/${username}`;
@@ -171,7 +170,7 @@ export default function ShareSheet({ username, isOpen, onClose, exportData }: Sh
     handleNativeShare,
   } = useShareActions(username, exportData, onClose);
 
-  const combinedStates: Record<string, OptionState> = { ...states, ...localStates };
+  const combinedStates: Record<string, OptionState> = states;
 
   const panelRef = useRef<HTMLDivElement>(null);
   const handlePanelKeyDown = useCallback((e: ReactKeyboardEvent) => {
@@ -232,13 +231,6 @@ export default function ShareSheet({ username, isOpen, onClose, exportData }: Sh
     const id = Date.now();
     setToast({ msg, id });
     setTimeout(() => setToast((t) => (t?.id === id ? null : t)), 2400);
-  }, []);
-
-  const setLocal = useCallback((key: string, state: OptionState) => {
-    setLocalStates((prev) => ({ ...prev, [key]: state }));
-    if (state === 'success' || state === 'error') {
-      setTimeout(() => setLocalStates((prev) => ({ ...prev, [key]: 'idle' })), 2500);
-    }
   }, []);
 
   const handleLocalCopyLink = (e: React.MouseEvent) => {
@@ -304,29 +296,11 @@ export default function ShareSheet({ username, isOpen, onClose, exportData }: Sh
     }
   };
 
-  const handleLocalCopyMarkdown = (e: React.MouseEvent) => {
+  const handleLocalCopyMarkdown = () => {
     handleCopyMarkdown();
     setMdCopied(true);
     showToast('✓ Markdown copied');
     setTimeout(() => setMdCopied(false), 2200);
-  };
-
-  const handleDownloadSTL = async () => {
-    setLocal('stl', 'loading');
-    try {
-      await new Promise((r) => setTimeout(r, 1200));
-      const stlContent = `solid commitpulse_monolith\n  facet normal 0 0 1\n    outer loop\n      vertex 0 0 0\n      vertex 10 0 0\n      vertex 10 10 0\n    endloop\n  endfacet\nendsolid commitpulse_monolith`;
-      const blob = new Blob([stlContent], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = `${username}-monolith.stl`;
-      link.href = url;
-      link.click();
-      URL.revokeObjectURL(url);
-      setLocal('stl', 'success');
-    } catch {
-      setLocal('stl', 'error');
-    }
   };
 
   return (
@@ -531,16 +505,19 @@ export default function ShareSheet({ username, isOpen, onClose, exportData }: Sh
                     },
                     {
                       key: 'stl',
-                      label: 'Download Printable 3D STL Monolith',
-                      action: handleDownloadSTL,
+                      label: 'Download Printable 3D STL (Coming Soon)',
+                      action: () => {},
+                      disabled: true,
                     },
                   ].map((row) => {
                     const rowState = combinedStates[row.key] ?? 'idle';
+                    const isDisabled =
+                      'disabled' in row && row.disabled ? true : rowState === 'loading';
                     return (
                       <button
                         key={row.key}
                         onClick={row.action}
-                        disabled={rowState === 'loading'}
+                        disabled={isDisabled}
                         className="w-full p-2 bg-zinc-50 dark:bg-zinc-900 rounded-xl text-left flex items-center justify-between border border-transparent hover:border-zinc-200 disabled:opacity-50"
                       >
                         <div className="flex items-center gap-3">
