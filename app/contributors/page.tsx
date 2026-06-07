@@ -1,4 +1,5 @@
 import ContributorsClient from './ContributorsClient';
+import { fetchWithRetry } from '@/lib/github';
 
 interface Contributor {
   id: number;
@@ -30,16 +31,20 @@ async function getContributors(): Promise<Contributor[]> {
     const token = process.env.GITHUB_PAT || process.env.GITHUB_TOKEN;
     const controller = new AbortController();
     const timeoutMs = process.env.NODE_ENV === 'test' ? 100 : 10000;
-    timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    // fetchWithRetry manages its own timeout, tokens, and retries.
 
-    const res = await fetch('https://api.github.com/repos/JhaSourav07/commitpulse/contributors', {
-      next: { revalidate: 3600 },
-      signal: controller.signal,
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        Accept: 'application/vnd.github+json',
+    const res = await fetchWithRetry(
+      'https://api.github.com/repos/JhaSourav07/commitpulse/contributors',
+      {
+        next: { revalidate: 3600 },
+        signal: controller.signal,
+        headers: {
+          Accept: 'application/vnd.github+json',
+        },
       },
-    });
+      0,
+      timeoutMs
+    );
 
     if (!res.ok) {
       const remaining = res.headers.get('x-ratelimit-remaining');
