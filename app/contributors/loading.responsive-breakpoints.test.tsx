@@ -5,24 +5,23 @@ import Loading from './loading';
 describe('Loading - Responsive Multi-device Columns & Mobile Viewport Layouts', () => {
   beforeEach(() => {
     Object.defineProperty(window, 'innerWidth', {
-      writable: true,
-      configurable: true,
-      value: 375,
+      writable: true, configurable: true, value: 375, 
     });
+    window.dispatchEvent(new Event('resize')); 
   });
 
   it('renders correctly on a mobile-width viewport', () => {
     const { container } = render(<Loading />);
 
-    expect(container.firstChild).toBeTruthy();
+    expect(container.firstChild).toBeInTheDocument();
   });
 
   it('uses a vertical flex layout suitable for mobile screens', () => {
     const { container } = render(<Loading />);
 
-    const contentWrapper = container.querySelector('.flex-col');
-
-    expect(contentWrapper).toBeTruthy();
+    const contentWrapper = container.querySelector('.flex.flex-col'); 
+    
+    expect(contentWrapper).toBeInTheDocument();
   });
 
   it('keeps content centered within the viewport', () => {
@@ -48,6 +47,6 @@ describe('Loading - Responsive Multi-device Columns & Mobile Viewport Layouts', 
 
     const spinner = container.querySelector('.animate-spin');
 
-    expect(spinner).toBeTruthy();
+    expect(spinner).toBeInTheDocument();
   });
 });
