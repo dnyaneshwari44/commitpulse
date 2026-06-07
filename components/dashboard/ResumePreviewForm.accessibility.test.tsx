@@ -1,63 +1,116 @@
-it('checks that crucial fields have associated visible text labels', () => {
-  renderComponent();
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import ResumePreviewForm from './ResumePreviewForm';
+import type { HTMLAttributes, ReactNode } from 'react';
+import '@testing-library/jest-dom';
 
-  expect(screen.getByText('Full Name')).toBeInTheDocument();
-  expect(screen.getByText('Email')).toBeInTheDocument();
-  expect(screen.getByText('Skills')).toBeInTheDocument();
-  expect(screen.getByText('Education')).toBeInTheDocument();
-  expect(screen.getByText('Experience')).toBeInTheDocument();
-});
+vi.mock('framer-motion', () => ({
+  motion: {
+    div: ({
+      children,
+      ...props
+    }: HTMLAttributes<HTMLDivElement> & { children?: ReactNode }) => (
+      <div {...props}>{children}</div>
+    ),
+  },
+}));
 
-it('checks that interactive inputs have focus-visible or outline configurations', () => {
-  renderComponent();
+vi.mock('sonner', () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
+}));
 
-  const nameInput = screen.getByDisplayValue('John Doe');
+const parsed = {
+  name: 'John Doe',
+  email: 'john@example.com',
+  phone: '1234567890',
+  skills: ['React'],
+  education: [],
+  experience: [],
+};
 
-  expect(nameInput).toHaveClass('focus:ring-2');
-  expect(nameInput).toHaveClass('focus:ring-emerald-500');
-  expect(nameInput).toHaveClass('outline-none');
-});
+describe('ResumePreviewForm - Accessibility compliance', () => {
+  const onBack = vi.fn();
+  const onComplete = vi.fn();
 
-it('checks that the save button is disabled when saving to prevent multiple submissions', () => {
-  renderComponent();
+  const renderComponent = () =>
+    render(
+      <ResumePreviewForm
+        githubUsername="john"
+        parsed={parsed}
+        fileName="resume.pdf"
+        onBack={onBack}
+        onComplete={onComplete}
+      />
+    );
 
-  const saveButton = screen.getByRole('button', { name: /Save Profile/i });
-  expect(saveButton).not.toBeDisabled();
-});
+  it('checks that crucial fields have associated visible text labels', () => {
+    renderComponent();
 
-it('renders heading with correct text for screen reader document navigation', () => {
-  render(
-    <ResumePreviewForm
-      githubUsername="john"
-      parsed={parsed}
-      fileName="resume.pdf"
-      onBack={onBack}
-      onComplete={onComplete}
-    />
-  );
+    expect(screen.getByText('Full Name')).toBeInTheDocument();
+    expect(screen.getByText('Email')).toBeInTheDocument();
+    expect(screen.getByText('Skills')).toBeInTheDocument();
+    expect(screen.getByText('Education')).toBeInTheDocument();
+    expect(screen.getByText('Experience')).toBeInTheDocument();
+  });
 
-  const heading = screen.getByRole('heading', { level: 3 });
-  expect(heading).toBeInTheDocument();
-  expect(heading.textContent).toContain('Review Parsed Data');
-});
+  it('checks that interactive inputs have focus-visible or outline configurations', () => {
+    renderComponent();
 
-it('has keyboard focusable Back and Save Profile buttons for keyboard navigation', () => {
-  render(
-    <ResumePreviewForm
-      githubUsername="john"
-      parsed={parsed}
-      fileName="resume.pdf"
-      onBack={onBack}
-      onComplete={onComplete}
-    />
-  );
+    const nameInput = screen.getByDisplayValue('John Doe');
 
-  const backButton = screen.getByRole('button', { name: /back/i });
-  const saveButton = screen.getByRole('button', { name: /save profile/i });
+    expect(nameInput).toHaveClass('focus:ring-2');
+    expect(nameInput).toHaveClass('focus:ring-emerald-500');
+    expect(nameInput).toHaveClass('outline-none');
+  });
 
-  backButton.focus();
-  expect(document.activeElement).toBe(backButton);
+  it('checks that the save button is disabled when saving to prevent multiple submissions', () => {
+    renderComponent();
 
-  saveButton.focus();
-  expect(document.activeElement).toBe(saveButton);
+    const saveButton = screen.getByRole('button', {
+      name: /Save Profile/i,
+    });
+
+    expect(saveButton).not.toBeDisabled();
+  });
+
+  it('renders heading with correct text for screen reader document navigation', () => {
+    render(
+      <ResumePreviewForm
+        githubUsername="john"
+        parsed={parsed}
+        fileName="resume.pdf"
+        onBack={onBack}
+        onComplete={onComplete}
+      />
+    );
+
+    const heading = screen.getByRole('heading', { level: 3 });
+
+    expect(heading).toBeInTheDocument();
+    expect(heading.textContent).toContain('Review Parsed Data');
+  });
+
+  it('has keyboard focusable Back and Save Profile buttons for keyboard navigation', () => {
+    render(
+      <ResumePreviewForm
+        githubUsername="john"
+        parsed={parsed}
+        fileName="resume.pdf"
+        onBack={onBack}
+        onComplete={onComplete}
+      />
+    );
+
+    const backButton = screen.getByRole('button', { name: /back/i });
+    const saveButton = screen.getByRole('button', { name: /save profile/i });
+
+    backButton.focus();
+    expect(document.activeElement).toBe(backButton);
+
+    saveButton.focus();
+    expect(document.activeElement).toBe(saveButton);
+  });
 });
