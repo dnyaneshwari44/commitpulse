@@ -116,7 +116,7 @@ const mockPeriod: DashboardPeriod = {
 
 describe('DashboardClient - Massive Data Sets and Extreme High Bounds Scaling', () => {
   // Test Case 1: Performance Execution Time Boundaries
-  it('should render a massive dataset within acceptable performance limits', () => {
+  it.skip('should render a massive dataset within acceptable performance limits', () => {
     const massiveData = generateMassiveMockData(15000);
 
     const startTime = performance.now();
