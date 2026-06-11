@@ -100,16 +100,6 @@ describe('GET /api/streak', () => {
   });
 
   describe('parameter validation', () => {
-<<<<<<< HEAD
-    it('clamps grace=-1 to 0 is provided', async () => {
-      const response = await GET(makeRequest({ user: 'octocat', grace: '-1' }));
-      expect(response.status).toBe(200);
-    });
-
-    it('clamps grace to when exceeds max value', async () => {
-      const response = await GET(makeRequest({ user: 'octocat', grace: '999' }));
-      expect(response.status).toBe(200);
-=======
     it('returns 400 when grace=-1 is provided', async () => {
       const response = await GET(
         makeRequest({
@@ -134,21 +124,15 @@ describe('GET /api/streak', () => {
       const body = await response.text();
       expect(body).toContain('<svg');
       expect(body).toContain('grace must be an integer between 0 and 7');
->>>>>>> d7564ec7 (fix(streak): return SVG instead of JSON on validation error)
     });
 
     it('returns 400 when days=0 is provided', async () => {
       const response = await GET(makeRequest({ user: 'octocat', days: '0' }));
       expect(response.status).toBe(400);
-<<<<<<< HEAD
-      const body = await response.json();
-      expect(body.error).toBe('Invalid parameters');
-=======
 
       const body = await response.text();
 
       expect(body).toContain('<svg');
->>>>>>> d7564ec7 (fix(streak): return SVG instead of JSON on validation error)
     });
 
     it('returns 400 when days is negative', async () => {
@@ -229,10 +213,6 @@ describe('GET /api/streak', () => {
 
     it('returns 400 when user contains spaces', async () => {
       const response = await GET(makeRequest({ user: 'john doe' }));
-<<<<<<< HEAD
-      const body = await response.json();
-=======
->>>>>>> d7564ec7 (fix(streak): return SVG instead of JSON on validation error)
       expect(response.status).toBe(400);
       const body = await response.text();
       expect(body).toContain('<svg');
@@ -273,11 +253,6 @@ describe('GET /api/streak', () => {
       expect(fetchGitHubContributions).not.toHaveBeenCalled();
     });
 
-<<<<<<< HEAD
-    it('clamps grace to 0 when below the minimum value', async () => {
-      const response = await GET(makeRequest({ user: 'octocat', grace: '-1' }));
-      expect(response.status).toBe(200);
-=======
     it('returns 400 when grace is below the minimum value', async () => {
       const response = await GET(
         makeRequest({
@@ -294,7 +269,6 @@ describe('GET /api/streak', () => {
       expect(body).toContain('grace must be an integer between 0 and 7');
 
       expect(fetchGitHubContributions).not.toHaveBeenCalled();
->>>>>>> d7564ec7 (fix(streak): return SVG instead of JSON on validation error)
     });
 
     it('returns 400 for unsupported ?layout query parameter values (strict schema validation)', async () => {
@@ -331,10 +305,6 @@ describe('GET /api/streak', () => {
       const response = await GET(
         makeRequest({ user: 'octocat', org: 'invalid_org_name_with_spaces' })
       );
-<<<<<<< HEAD
-      const body = await response.json();
-=======
->>>>>>> d7564ec7 (fix(streak): return SVG instead of JSON on validation error)
       expect(response.status).toBe(400);
       const body = await response.text();
       expect(body).toContain('<svg');
@@ -624,10 +594,6 @@ describe('GET /api/streak', () => {
       const response = await GET(
         makeRequest({ user: 'octocat', from: '2025-12-31', to: '2025-01-01' })
       );
-<<<<<<< HEAD
-      const body = await response.json();
-=======
->>>>>>> d7564ec7 (fix(streak): return SVG instead of JSON on validation error)
       expect(response.status).toBe(400);
       const body = await response.text();
       expect(body).toContain('<svg');
@@ -642,48 +608,32 @@ describe('GET /api/streak', () => {
 
     it('returns 400 for invalid year format', async () => {
       const response = await GET(makeRequest({ user: 'octocat', year: 'abcd' }));
-<<<<<<< HEAD
-      const body = await response.json();
-=======
       const body = await response.text();
 
->>>>>>> d7564ec7 (fix(streak): return SVG instead of JSON on validation error)
       expect(response.status).toBe(400);
       expect(body).toContain('GitHub was founded in 2008');
     });
 
     it('returns 400 for malformed numeric year', async () => {
       const response = await GET(makeRequest({ user: 'octocat', year: '100000' }));
-<<<<<<< HEAD
-      const body = await response.json();
-=======
       const body = await response.text();
 
->>>>>>> d7564ec7 (fix(streak): return SVG instead of JSON on validation error)
       expect(response.status).toBe(400);
       expect(body).toContain('GitHub was founded in 2008');
     });
 
     it('returns 400 for years before GitHub existed', async () => {
       const response = await GET(makeRequest({ user: 'octocat', year: '1999' }));
-<<<<<<< HEAD
-      const body = await response.json();
-=======
       const body = await response.text();
 
->>>>>>> d7564ec7 (fix(streak): return SVG instead of JSON on validation error)
       expect(response.status).toBe(400);
       expect(body).toContain('GitHub was founded in 2008');
     });
 
     it('returns 400 for the year=2007(before GitHub was founded)', async () => {
       const response = await GET(makeRequest({ user: 'octocat', year: '2007' }));
-<<<<<<< HEAD
-      const body = await response.json();
-=======
       const body = await response.text();
 
->>>>>>> d7564ec7 (fix(streak): return SVG instead of JSON on validation error)
       expect(response.status).toBe(400);
       expect(body).toContain('GitHub was founded in 2008');
     });
@@ -691,12 +641,8 @@ describe('GET /api/streak', () => {
     it('returns 400 for future years', async () => {
       const futureYear = (new Date().getFullYear() + 1).toString();
       const response = await GET(makeRequest({ user: 'octocat', year: futureYear }));
-<<<<<<< HEAD
-      const body = await response.json();
-=======
       const body = await response.text();
 
->>>>>>> d7564ec7 (fix(streak): return SVG instead of JSON on validation error)
       expect(response.status).toBe(400);
       expect(body).toContain('GitHub was founded in 2008');
     });
@@ -716,30 +662,13 @@ describe('GET /api/streak', () => {
       it('returns 400 for malformed ?date= query parameter values (Variation 3)', async () => {
         const response = await GET(makeRequest({ user: 'octocat', date: '2026-15-40' }));
         expect(response.status).toBe(400);
-<<<<<<< HEAD
-        expect(body.error).toBe('Invalid parameters');
-        expect(body.details.fieldErrors.date[0]).toContain('Invalid "date" format');
-        expect(fetchGitHubContributions).not.toHaveBeenCalled();
-      });
-
-      it('returns 400 when an invalid ISO8601 calendar date format like "2026-15-40" is supplied', async () => {
-        const response = await GET(makeRequest({ user: 'octocat', date: '2026-15-40' }));
-        const body = await response.json();
-        expect(response.status).toBe(400);
-        expect(body.details.fieldErrors.date[0]).toContain('Invalid "date" format');
-=======
         const body = await response.text();
         expect(body).toContain('<svg');
         expect(body).toContain('Invalid "date" format');
->>>>>>> d7564ec7 (fix(streak): return SVG instead of JSON on validation error)
       });
 
       it('returns 400 when an invalid ISO8601 calendar date format like "2026-15-40" is supplied (Variation 4)', async () => {
         const response = await GET(makeRequest({ user: 'octocat', date: '2026-15-40' }));
-<<<<<<< HEAD
-        const body = await response.json();
-=======
->>>>>>> d7564ec7 (fix(streak): return SVG instead of JSON on validation error)
         expect(response.status).toBe(400);
         const body = await response.text();
         expect(body).toContain('<svg');
@@ -812,15 +741,6 @@ describe('GET /api/streak', () => {
     it('returns 400 Bad Request listing allowed themes when an invalid theme is provided', async () => {
       const response = await GET(makeRequest({ user: 'octocat', theme: 'nonexistent_theme_name' }));
       expect(response.status).toBe(400);
-<<<<<<< HEAD
-      const body = await response.json();
-      expect(body.error).toBe('Invalid parameters');
-      const fieldError = body.details.fieldErrors.theme[0];
-      expect(fieldError).toContain('Invalid theme. Supported themes:');
-      expect(fieldError).toContain('dark');
-      expect(fieldError).toContain('light');
-      expect(fieldError).toContain('neon');
-=======
 
       const body = await response.text();
       expect(body).toContain('<svg');
@@ -828,7 +748,6 @@ describe('GET /api/streak', () => {
       expect(body).toContain('dark');
       expect(body).toContain('light');
       expect(body).toContain('neon');
->>>>>>> d7564ec7 (fix(streak): return SVG instead of JSON on validation error)
     });
 
     it('accepts capitalized or mixed-case theme parameter like "NEON" and maps it correctly', async () => {
