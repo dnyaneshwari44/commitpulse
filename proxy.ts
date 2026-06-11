@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { rateLimit } from './lib/rate-limit';
 
 /**
- * Middleware to enforce rate limiting on specific API routes.
+ * Proxy to enforce rate limiting on specific API routes.
  *
  * Protected Routes:
  * - /api/streak
@@ -14,7 +14,7 @@ import { rateLimit } from './lib/rate-limit';
  *
  * Limit: 60 requests per minute per IP.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Use Vercel's ip property if available, fallback to headers, then localhost
   const ip =
     request.headers.get('x-forwarded-for')?.split(',')[0] ??
@@ -50,8 +50,8 @@ export async function middleware(request: NextRequest) {
 }
 
 /**
- * Configure which routes should trigger this middleware.
- * Using a matcher is more efficient than checking pathnames inside the middleware.
+ * Configure which routes should trigger this proxy.
+ * Using a matcher is more efficient than checking pathnames inside the proxy.
  */
 export const config = {
   matcher: [
