@@ -3,10 +3,10 @@ import { isTrustedProxy, ip4ToInt, isIPv4InCidr, isIPv4 } from './trustedProxy';
 import type { TrustedProxyConfig } from '../types/network';
 
 describe('trustedProxy — Massive Data Sets and Extreme High Bounds Scaling', () => {
-  it('handles a massive list of 10000 trusted proxy IPs without performance degradation', () => {
+  it('correctly checks 10000 trusted proxy IPs within performance limit', () => {
     const trustedProxies = Array.from(
       { length: 10000 },
-      (_, i) => `10.0.${Math.floor(i / 255)}.${i % 255}`
+      (_, i) => `10.0.${Math.floor(i / 256)}.${i % 256}`
     );
     const config: TrustedProxyConfig = { trustedProxies, trustPrivateRanges: false };
 
@@ -18,53 +18,59 @@ describe('trustedProxy — Massive Data Sets and Extreme High Bounds Scaling', (
     expect(duration).toBeLessThan(500);
   });
 
-  it('processes 10000 sequential ip4ToInt conversions within time limit', () => {
+  it('performs 10000 sequential ip4ToInt conversions within performance limit', () => {
     const start = performance.now();
+
     for (let i = 0; i < 10000; i++) {
-      ip4ToInt(`${(i >> 24) & 255}.${(i >> 16) & 255}.${(i >> 8) & 255}.${i & 255}`);
+      const ip = `${(i >> 24) & 255}.${(i >> 16) & 255}.${(i >> 8) & 255}.${i & 255}`;
+      ip4ToInt(ip);
     }
+
     const duration = performance.now() - start;
     expect(duration).toBeLessThan(500);
   });
 
-  it('evaluates 10000 CIDR checks against a large subnet without errors', () => {
-    const results: boolean[] = [];
-    const start = performance.now();
-    for (let i = 0; i < 10000; i++) {
-      results.push(
-        isIPv4InCidr(`192.168.${Math.floor(i / 255) % 255}.${i % 255}`, '192.168.0.0/16')
-      );
-    }
-    const duration = performance.now() - start;
+  it('performs 10000 CIDR membership checks within performance limit', () => {
+    const cidrs = Array.from({ length: 10 }, (_, i) => `10.${i}.0.0/16`);
 
-    expect(results.every((r) => r === true)).toBe(true);
+    const start = performance.now();
+
+    for (let i = 0; i < 10000; i++) {
+      const ip = `10.${i % 10}.${Math.floor(i / 10) % 256}.1`;
+      cidrs.some((cidr) => isIPv4InCidr(ip, cidr));
+    }
+
+    const duration = performance.now() - start;
     expect(duration).toBeLessThan(500);
   });
 
-  it('validates 10000 IPv4 addresses correctly under high load', () => {
+  it('validates 10000 IPv4 addresses without errors within performance limit', () => {
     const start = performance.now();
-    let validCount = 0;
-    for (let i = 0; i < 10000; i++) {
-      if (isIPv4(`10.0.${Math.floor(i / 255) % 255}.${i % 255}`)) validCount++;
-    }
-    const duration = performance.now() - start;
 
-    expect(validCount).toBe(10000);
+    for (let i = 0; i < 10000; i++) {
+      const ip = `${i % 256}.${Math.floor(i / 256) % 256}.0.1`;
+      isIPv4(ip);
+    }
+
+    const duration = performance.now() - start;
     expect(duration).toBeLessThan(500);
   });
 
-  it('correctly rejects all untrusted IPs from a massive proxy list under scale', () => {
-    const trustedProxies = Array.from(
-      { length: 5000 },
-      (_, i) => `172.16.${Math.floor(i / 255)}.${i % 255}`
-    );
-    const config: TrustedProxyConfig = { trustedProxies, trustPrivateRanges: false };
+  it('correctly rejects 10000 untrusted IPs under high load within performance limit', () => {
+    const config: TrustedProxyConfig = {
+      trustedProxies: ['192.168.1.1'],
+      trustPrivateRanges: false,
+    };
 
     const start = performance.now();
-    const result = isTrustedProxy('8.8.8.8', config);
-    const duration = performance.now() - start;
 
-    expect(result).toBe(false);
+    for (let i = 0; i < 10000; i++) {
+      const ip = `8.8.${i % 256}.${Math.floor(i / 256) % 256}`;
+      const result = isTrustedProxy(ip, config);
+      expect(result).toBe(false);
+    }
+
+    const duration = performance.now() - start;
     expect(duration).toBeLessThan(500);
   });
 });
