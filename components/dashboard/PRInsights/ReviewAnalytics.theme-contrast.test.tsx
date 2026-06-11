@@ -2,11 +2,30 @@ import { render, screen } from '@testing-library/react';
 import ReviewAnalytics from './ReviewAnalytics';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-const mockData = {
+import type { PRInsightData } from '@/services/github/pr-insights';
+
+const mockData: PRInsightData = {
+  totalPRs: 100,
+  openPRs: 10,
+  mergedPRs: 80,
+  closedPRs: 10,
+  mergeRate: 80,
+  avgReviewTime: 12,
+  avgTimeToFirstReview: 4,
+  avgCycleTime: 24,
+
+  weeklyActivity: [],
+  monthlyActivity: [],
+
   reviewsGiven: 25,
   reviewsReceived: 18,
+  avgReviewResponseTime: 6,
   fastestReview: 2.5,
   slowestReview: 48.7,
+
+  repoPerformance: [],
+
+  highlights: {},
 };
 
 describe('ReviewAnalytics Theme Contrast', () => {
