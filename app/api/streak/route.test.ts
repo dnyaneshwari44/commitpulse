@@ -195,9 +195,9 @@ describe('GET /api/streak', () => {
 
     it('returns 400 when user contains spaces', async () => {
       const response = await GET(makeRequest({ user: 'john doe' }));
-      const body = await response.json();
+      const body = await response.text();
       expect(response.status).toBe(400);
-      expect(body.details.fieldErrors.user[0]).toContain('Invalid GitHub username');
+      expect(body).toContain('Invalid GitHub username');
     });
 
     it('returns 400 when user exceeds 39 characters', async () => {
@@ -274,9 +274,9 @@ describe('GET /api/streak', () => {
       const response = await GET(
         makeRequest({ user: 'octocat', org: 'invalid_org_name_with_spaces' })
       );
-      const body = await response.json();
+      const body = await response.text();
       expect(response.status).toBe(400);
-      expect(body.details.fieldErrors.org[0]).toBe('Invalid organization name format');
+      expect(body).toContain('Invalid organization name format');
       expect(getOrgDashboardData).not.toHaveBeenCalled();
     });
   });
@@ -591,11 +591,9 @@ describe('GET /api/streak', () => {
       const response = await GET(
         makeRequest({ user: 'octocat', from: '2025-12-31', to: '2025-01-01' })
       );
-      const body = await response.json();
+      const body = await response.text();
       expect(response.status).toBe(400);
-      expect(body.details.fieldErrors.to[0]).toContain(
-        '"to" date must be after or equal to "from" date'
-      );
+      expect(body).toContain('"to" date must be after or equal to "from" date');
       expect(fetchGitHubContributions).not.toHaveBeenCalled();
     });
 
@@ -606,38 +604,38 @@ describe('GET /api/streak', () => {
 
     it('returns 400 for invalid year format', async () => {
       const response = await GET(makeRequest({ user: 'octocat', year: 'abcd' }));
-      const body = await response.json();
+      const body = await response.text();
       expect(response.status).toBe(400);
-      expect(body.details.fieldErrors.year[0]).toContain('GitHub was founded in 2008');
+      expect(body).toContain('GitHub was founded in 2008');
     });
 
     it('returns 400 for malformed numeric year', async () => {
       const response = await GET(makeRequest({ user: 'octocat', year: '100000' }));
-      const body = await response.json();
+      const body = await response.text();
       expect(response.status).toBe(400);
-      expect(body.details.fieldErrors.year[0]).toContain('GitHub was founded in 2008');
+      expect(body).toContain('GitHub was founded in 2008');
     });
 
     it('returns 400 for years before GitHub existed', async () => {
       const response = await GET(makeRequest({ user: 'octocat', year: '1999' }));
-      const body = await response.json();
+      const body = await response.text();
       expect(response.status).toBe(400);
-      expect(body.details.fieldErrors.year[0]).toContain('GitHub was founded in 2008');
+      expect(body).toContain('GitHub was founded in 2008');
     });
 
     it('returns 400 for the year=2007(before GitHub was founded)', async () => {
       const response = await GET(makeRequest({ user: 'octocat', year: '2007' }));
-      const body = await response.json();
+      const body = await response.text();
       expect(response.status).toBe(400);
-      expect(body.details.fieldErrors.year[0]).toContain('GitHub was founded in 2008');
+      expect(body).toContain('GitHub was founded in 2008');
     });
 
     it('returns 400 for future years', async () => {
       const futureYear = (new Date().getFullYear() + 1).toString();
       const response = await GET(makeRequest({ user: 'octocat', year: futureYear }));
-      const body = await response.json();
+      const body = await response.text();
       expect(response.status).toBe(400);
-      expect(body.details.fieldErrors.year[0]).toContain('GitHub was founded in 2008');
+      expect(body).toContain('GitHub was founded in 2008');
     });
 
     it('accepts year=2008 (the earliest valid year)', async () => {
@@ -654,26 +652,26 @@ describe('GET /api/streak', () => {
     describe('date parameter', () => {
       it('returns 400 for malformed ?date= query parameter values (Variation 3)', async () => {
         const response = await GET(makeRequest({ user: 'octocat', date: '2026-15-40' }));
-        const body = await response.json();
+        const body = await response.text();
 
         expect(response.status).toBe(400);
-        expect(body.error).toBe('Invalid parameters');
-        expect(body.details.fieldErrors.date[0]).toContain('Invalid "date" format');
+        expect(body).toContain('<svg');
+        expect(body).toContain('Invalid "date" format');
         expect(fetchGitHubContributions).not.toHaveBeenCalled();
       });
 
       it('returns 400 when an invalid ISO8601 calendar date format like "2026-15-40" is supplied', async () => {
         const response = await GET(makeRequest({ user: 'octocat', date: '2026-15-40' }));
-        const body = await response.json();
+        const body = await response.text();
         expect(response.status).toBe(400);
-        expect(body.details.fieldErrors.date[0]).toContain('Invalid "date" format');
+        expect(body).toContain('Invalid "date" format');
       });
 
       it('returns 400 when an invalid ISO8601 calendar date format like "2026-15-40" is supplied (Variation 4)', async () => {
         const response = await GET(makeRequest({ user: 'octocat', date: '2026-15-40' }));
-        const body = await response.json();
+        const body = await response.text();
         expect(response.status).toBe(400);
-        expect(body.details.fieldErrors.date[0]).toContain('Invalid "date" format. Use ISO 8601.');
+        expect(body).toContain('Invalid "date" format. Use ISO 8601.');
       });
     });
   });
@@ -927,20 +925,20 @@ describe('GET /api/streak', () => {
 
     it('returns 400 and names the bad value in the field error', async () => {
       const response = await GET(makeRequest({ user: 'octocat', tz: 'garbage' }));
-      const body = await response.json();
+      const body = await response.text();
 
       expect(response.status).toBe(400);
-      expect(body.details.fieldErrors.tz[0]).toContain('Invalid timezone');
+      expect(body).toContain('Invalid timezone');
     });
 
     it('is not vulnerable to XSS via tz parameter', async () => {
       const response = await GET(
         makeRequest({ user: 'octocat', tz: '</text><script>alert(1)</script>' })
       );
-      const body = await response.json();
+      const body = await response.text();
 
       expect(response.status).toBe(400);
-      expect(body.details.fieldErrors.tz[0]).toContain('Invalid timezone');
+      expect(body).toContain('Invalid timezone');
     });
 
     it('returns 200 with a valid IANA timezone', async () => {
@@ -1776,11 +1774,11 @@ describe('GET /api/streak', () => {
 
     it('returns a structured error body containing \'Invalid "date" format\' for "2026-15-40"', async () => {
       const response = await GET(makeRequest({ user: 'octocat', date: '2026-15-40' }));
-      const body = await response.json();
+      const body = await response.text();
 
       expect(response.status).toBe(400);
-      expect(body.error).toBe('Invalid parameters');
-      expect(body.details.fieldErrors.date[0]).toContain('Invalid "date" format');
+      expect(body).toContain('<svg');
+      expect(body).toContain('Invalid "date" format');
     });
 
     it('does not call fetchGitHubContributions when ?date= is malformed', async () => {
