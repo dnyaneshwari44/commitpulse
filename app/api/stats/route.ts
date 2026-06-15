@@ -7,7 +7,7 @@ import { getClientIp } from '@/utils/getClientIp';
 import { quotaMonitor } from '@/services/github/quota-monitor';
 import { refreshPolicy } from '@/services/github/refresh-policy';
 import { refreshRateLimiter } from '@/services/github/refresh-rate-limiter';
-import { getUserGitHubToken } from '@/lib/githubToken';
+import { getUserGitHubToken } from '@/lib/githubtoken';
 
 function logSecurityEvent(event: string, details: Record<string, unknown>) {
   console.warn(
