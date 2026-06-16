@@ -118,7 +118,7 @@ describe('GET /api/streak dateRange parameter', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/svg+xml; charset=utf-8');
     expect(res.headers.get('Cache-Control')).toBe(
-      'public, s-maxage=3600, stale-while-revalidate=86400'
+      'public, max-age=14400, s-maxage=3600, stale-while-revalidate=7200'
     );
   });
 });

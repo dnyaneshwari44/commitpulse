@@ -174,7 +174,7 @@ describe('GET /api/wrapped', () => {
     it('caches for 24 hours by default', async () => {
       const response = await GET(makeRequest({ user: 'octocat' }));
       expect(response.headers.get('Cache-Control')).toBe(
-        'public, s-maxage=86400, stale-while-revalidate=86400'
+        'public, max-age=14400, s-maxage=86400, stale-while-revalidate=7200'
       );
     });
 
