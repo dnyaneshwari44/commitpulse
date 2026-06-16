@@ -15,11 +15,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
  * THEME_PALETTES map inside ContributionCity3D.
  */
 
-function readThemeFromDOM(): string {
-  if (typeof window === 'undefined') return 'dark';
+// hooks/use3dtheme.ts
+function readThemeFromDOM() {
   const htmlTheme = document.documentElement.getAttribute('data-theme');
   if (htmlTheme) return htmlTheme;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+  // Safe execution guard 👇
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+
+  return 'light'; // Standard default fallback
 }
 
 export function use3DTheme(forcedTheme?: string): string {
