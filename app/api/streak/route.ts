@@ -587,6 +587,27 @@ export async function GET(request: Request) {
       }
     }
 
+    if (format === 'png') {
+      const { Resvg } = await import('@resvg/resvg-js');
+      const resvg = new Resvg(svg, {
+        background: 'transparent',
+        fitTo: { mode: 'original' },
+      });
+      const pngBuffer = resvg.render().asPng();
+
+      return new NextResponse(new Uint8Array(pngBuffer), {
+        headers: {
+          'Content-Type': 'image/png',
+          'Cache-Control': cacheControl,
+          'X-CommitPulse-Grace-Applied': String(grace),
+          ETag: weakEtag,
+          'X-Cache-Status': shouldBypassCache
+            ? `BYPASS, fetched=${new Date().toISOString()}`
+            : 'HIT',
+        },
+      });
+    }
+
     return new NextResponse(svg, {
       headers: {
         'Content-Type': 'image/svg+xml; charset=utf-8',
